@@ -1,4 +1,4 @@
-import requests
+from collections import defaultdict
 
 logs = [
         {'date': '2025-08-25T08:12:41', 'host': 'ubuntu', 'process': 'sshd', 'pid': '1350', 'status': 'Accepted', 'user': 'alice', 'ip': '103.102.220.5', 'port': '50321', 'protocol': 'ssh2'}, 
@@ -15,25 +15,17 @@ logs = [
         {'date': '2025-08-25T08:17:48', 'host': 'ubuntu', 'process': 'sshd', 'pid': '1365', 'status': 'Failed', 'user': 'root', 'ip': '8.8.8.8', 'port': '33321', 'protocol': 'ssh2'}
 ]
 
-
-def geo_IP(log):
-    allowed = ['US', 'CA', 'Unknown']
-    try:
-        res = requests.get(f"https://ipinfo.io/{log['ip']}/json").json()
-        if res.get("country", "Unknown") in allowed:
-            return "Allowed"
-        else:
-            alert = {
-                "alert": "Country is not on allowed list",
-                "ip": log['ip'],
-                "country": res.get("country"),
-                "Authentication": log['status']
-            }
-            return alert
-    except:
-        return "Failed"
-
+spray_fields = defaultdict(list)
+alert = []
 
 for log in logs:
-    country = geo_IP(log)
-    print(country)
+    if log['user'] not in spray_fields[log['ip']]:
+        spray_fields[log['ip']].append(log['user'])
+
+for ip, users in spray_fields.items():
+    if len(users) > 1:
+        alert.append({
+            "alert": "One IP is attempting to login as multiple users",
+            "ip": ip,
+            "user_accounts": users
+        })
