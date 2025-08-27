@@ -23,6 +23,9 @@ with open(log_file, 'r') as file:
             data["date"] = dt.isoformat()
 
             parsed.append(data)
-print(parsed)
+
+#print(parsed)
+
+
 
   

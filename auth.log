@@ -19,3 +19,7 @@ Aug 25 08:26:12 ubuntu sshd[1380]: Failed password for unknown user test from 45
 Aug 25 08:26:15 ubuntu sshd[1380]: Failed password for unknown user test from 45.33.22.11 port 41890 ssh2
 Aug 25 08:28:01 ubuntu sshd[1385]: Accepted password for bob from 192.168.1.105 port 60412 ssh2
 Aug 25 08:29:55 ubuntu sshd[1387]: Failed password for root from 203.0.113.99 port 51045 ssh2
+
+
+
+
