@@ -21,7 +21,8 @@ def geo_IP(log):
     try:
         res = requests.get(f"https://ipinfo.io/{log['ip']}/json").json()
         if res.get("country", "Unknown") in allowed:
-            return "Allowed"
+            #return "Allowed"
+            return None
         else:
             alert = {
                 "alert": "Country is not on allowed list",
@@ -32,6 +33,7 @@ def geo_IP(log):
             return alert
     except:
         return "Failed"
+        
 
 
 for log in logs:
