@@ -2,16 +2,16 @@ from flask import Flask, render_template, request, flash, redirect, url_for, jso
 from werkzeug.utils import secure_filename
 import os
 
-# import your analyzer class
+
 from class_auth import authLogs_Analyzer  
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
+app.config['SECRET_KEY'] = 'secret'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 ALLOWED_EXTENSIONS = {'txt', 'log'}
-alerts_store = []  # in-memory alerts storage
+alerts_store = []  
 
 
 def allowed_file(filename):
@@ -39,7 +39,7 @@ def upload_file():
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(file_path)
 
-            # Run analyzer on uploaded log
+
             analyzer = authLogs_Analyzer(file_path)
             alerts_store = analyzer.analyze()
 
