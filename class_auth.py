@@ -33,7 +33,6 @@ class authLogs_Analyzer:
         ####################################
         self.brute_force_alerts = []
 
-
     def file_parsed(self):
         parsed = []
         with open(self.log_file, 'r') as file:
