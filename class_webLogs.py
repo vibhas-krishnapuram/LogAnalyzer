@@ -7,7 +7,18 @@ import ipaddress
 
 class WebLogScanner:
 
-    def __init__(self):
+    def __init__(self, log_file="web.log"):
+
+        self.pattern = re.compile(
+        r'(?P<ip>\S+) - - \[(?P<datetime>[^\]]+)\] '
+        r'"(?P<method>\S+) (?P<path>\S+) (?P<protocol>[^"]+)" '
+        r'(?P<status>\d{3}) (?P<bytes>\d+) '
+        r'"[^"]*" "(?P<user_agent>[^"]+)"'
+        )  
+
+        self.log_file = log_file
+        self.parsed = self.file_parsing()
+
         self.vulnerability_patterns = {
             'sql_injection': [
                 r"'.*(?:union|select|insert|delete|drop|update).*--",
@@ -71,4 +82,36 @@ class WebLogScanner:
             r"python-requests"
         ]
 
-        
+        ##### ALERT ARRAYS #######
+        self.user_agent_alert = []
+
+
+    def file_parsing(self):
+        parsed = []
+        with open(self.log_file, 'r') as file:
+            for lines in file:
+                match = self.pattern.match(lines)
+                if match:
+                    data = match.groupdict()
+                    dt_str = data["datetime"]
+                    try:
+                        dt = datetime.strptime(dt_str, "%d/%b/%Y:%H:%M:%S %z")
+                        data["datetime"] = dt.isoformat()
+                    except ValueError:
+                        pass
+                    parsed.append(data)
+        return parsed
+
+    def userAgent_search(self):
+        for log in self.parsed:
+            user_agent = log['user_agent']
+
+            for bad in self.attack_user_agents:
+                if bad.lower() in user_agent.lower():
+                    self.user_agent_alert.append(
+                        {
+                        "alert": "Potential Malicous Agent",
+                        "user_agent": user_agent,
+                        "timestamp": log['datetime']
+                        })
+        return self.user_agent_alert

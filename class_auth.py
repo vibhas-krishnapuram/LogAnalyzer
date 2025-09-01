@@ -6,7 +6,6 @@ from collections import defaultdict
 
 class authLogs_Analyzer:
 
-    #def format_file(self):
 
     def __init__(self, log_file="auth.log"):
         self.log_file = log_file
