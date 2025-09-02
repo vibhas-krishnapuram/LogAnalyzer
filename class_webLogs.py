@@ -98,20 +98,50 @@ class WebLogScanner:
                         dt = datetime.strptime(dt_str, "%d/%b/%Y:%H:%M:%S %z")
                         data["datetime"] = dt.isoformat()
                     except ValueError:
-                        pass
+                        data["raw_datetime"] = dt_str
                     parsed.append(data)
         return parsed
 
+
     def userAgent_search(self):
+        agent_alerts = []
         for log in self.parsed:
             user_agent = log['user_agent']
 
             for bad in self.attack_user_agents:
                 if bad.lower() in user_agent.lower():
-                    self.user_agent_alert.append(
+                    agent_alerts.append(
                         {
                         "alert": "Potential Malicous Agent",
+                        "ip": log.get('ip', "Unkown"),
                         "user_agent": user_agent,
-                        "timestamp": log['datetime']
+                        "timestamp": log['datetime'],
                         })
-        return self.user_agent_alert
+        return agent_alerts
+    
+    def webVuln_search(self):
+        compiled_vulnerability_patterns = {
+        vuln: [re.compile(pattern, re.IGNORECASE) for pattern in patterns]
+        for vuln, patterns in self.vulnerability_patterns.items()
+}
+        vuln_alert = []
+
+        for log in self.parsed:
+            pathh = log.get("path", None)
+
+            if pathh:
+                for vuln, patterns in compiled_vulnerability_patterns.items():
+                    for pattern in patterns:
+                        if pattern.search(pathh):
+                            vuln_alert.append({
+                                "alert": "Web App Vulnerability",
+                                "ip_address": log.get('ip', "unknown"),
+                                "vulnerability": vuln,
+                                "type": pattern.pattern,
+                                "path": pathh
+                            })
+                            break
+            else:
+                continue
+
+        return vuln_alert
