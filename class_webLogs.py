@@ -1,6 +1,6 @@
 import re
 import json
-import urllib.parse
+import requests
 from collections import defaultdict, Counter
 from datetime import datetime
 import ipaddress
@@ -83,7 +83,13 @@ class WebLogScanner:
         ]
 
         ##### ALERT ARRAYS #######
-        self.user_agent_alert = []
+        self.user_agent_alerts = []
+
+        self.webApp_vuln_alerts = []
+
+        self.allowed = ['US', 'CA', 'Unknown']
+        self.geo_cache = {}
+        self.geoIP_alerts = []
 
 
     def file_parsing(self):
@@ -145,3 +151,49 @@ class WebLogScanner:
                 continue
 
         return vuln_alert
+
+
+    def geo_IP_alert(self):
+        geoIP_alerts = []
+
+        for log in self.parsed:
+            ip = log.get('ip', "Unknown")
+
+            if ip in self.geo_cache:
+                country = self.geo_cache[ip]
+            else:
+                try:
+                    res = requests.get(f"https://ipinfo.io/{ip}/json", timeout=2).json()
+                    country = res.get("country", "Unknown")
+                except requests.RequestException:
+                    country = "Unknown"
+                self.geo_cache[ip] = country  # cache all results
+
+            if country not in self.allowed:
+                geoIP_alerts.append({
+                    "alert": "Country is not on allowed list",
+                    "ip": ip,
+                    "country": country,
+                    "Authentication": log['status'],
+                    "timestamp": log.get("datetime", "unknown")
+                })
+        return geoIP_alerts
+            
+
+
+    def analyze(self):
+
+        self.user_agent_alerts = self.userAgent_search()
+
+        self.webApp_vuln_alerts = self.webVuln_search()
+
+        self.geoIP_alerts = self.geo_IP_alert()
+
+        return {
+            "user_agent_alerts": self.user_agent_alerts,
+            "webApp_vuln_alerts": self.webApp_vuln_alerts,
+            "geoIP_alerts": self.geoIP_alerts
+        }
+        
+
+    
