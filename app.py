@@ -2,8 +2,8 @@ from flask import Flask, render_template, request, flash, redirect, url_for, jso
 from werkzeug.utils import secure_filename
 import os
 
-from MainClasses.class_auth import authLogs_Analyzer  
-from MainClasses.class_webLogs import WebLogScanner
+from Main.class_auth import authLogs_Analyzer  
+from Main.class_webLogs import WebLogScanner
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret-key'
