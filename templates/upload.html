@@ -1,20 +1,98 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>File Upload</title>
+    <meta charset="UTF-8">
+    <title>Log Analyzer</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .alert-table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        .alert-table th, .alert-table td { border: 1px solid #ddd; padding: 8px; }
+        .alert-table th { background-color: #f2f2f2; }
+        .flash { color: green; margin-bottom: 20px; }
+    </style>
 </head>
 <body>
+    <h2>Upload a Log File</h2>
+
+    <!-- Flash messages -->
     {% with messages = get_flashed_messages() %}
-        {% if messages %}
+      {% if messages %}
+        <div class="flash">
             {% for message in messages %}
-                <div>{{ message }}</div>
+              <p>{{ message }}</p>
             {% endfor %}
-        {% endif %}
+        </div>
+      {% endif %}
     {% endwith %}
-    
-    <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="file" required>
-        <input type="submit" value="Upload">
+
+    <!-- Upload Form -->
+    <form id="uploadForm" method="POST" enctype="multipart/form-data">
+        <label for="fileType">Select Log Type:</label>
+        <select id="fileType" name="file_type">
+            <option value="auth">Authentication Log</option>
+            <option value="web">Web Log</option>
+        </select>
+        <br><br>
+        <input type="file" name="file" required />
+        <button type="submit">Upload & Analyze</button>
     </form>
+
+    <hr>
+
+    <h3>Uploaded Files</h3>
+    <select id="fileSelect">
+        <option value="">-- Select a file --</option>
+    </select>
+
+    <div id="alertsContainer"></div>
+
+    <script>
+        async function fetchFiles() {
+            const res = await fetch('/files');
+            const data = await res.json();
+            const select = document.getElementById('fileSelect');
+            select.innerHTML = '<option value="">-- Select a file --</option>';
+            data.files.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file;
+                option.textContent = file;
+                select.appendChild(option);
+            });
+        }
+
+        async function fetchAlerts(filename) {
+            if (!filename) return;
+            const res = await fetch(`/alerts/${filename}`);
+            const data = await res.json();
+            const container = document.getElementById('alertsContainer');
+            if (data.error) {
+                container.innerHTML = `<p>${data.error}</p>`;
+                return;
+            }
+
+            // Build table
+            let html = `<table class="alert-table">
+                        <tr>`;
+            // Table headers
+            const headers = Object.keys(data[0] || {});
+            headers.forEach(h => html += `<th>${h}</th>`);
+            html += `</tr>`;
+            // Table rows
+            data.forEach(alert => {
+                html += `<tr>`;
+                headers.forEach(h => html += `<td>${alert[h] || ''}</td>`);
+                html += `</tr>`;
+            });
+            html += `</table>`;
+            container.innerHTML = html;
+        }
+
+        document.getElementById('fileSelect').addEventListener('change', (e) => {
+            fetchAlerts(e.target.value);
+        });
+
+        // Load uploaded files on page load
+        fetchFiles();
+    </script>
 </body>
 </html>
