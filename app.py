@@ -23,7 +23,7 @@ def allowed_file(filename):
 @app.route("/home", methods=["GET", "POST"])
 def upload_file():
     if request.method == 'POST':
-        # Check if a file was uploaded
+     
         if 'file' not in request.files:
             flash('No file selected')
             return redirect(request.url)
@@ -33,13 +33,13 @@ def upload_file():
             flash('No file selected')
             return redirect(request.url)
         
-        file_type = request.form.get('file_type', 'auth')  # default to auth logs
+        file_type = request.form.get('file_type', 'auth')  
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(file_path)
 
-            # Select analyzer based on log type
+           
             if file_type == 'web':
                 analyzer = WebLogScanner(file_path)
             elif file_type == 'auth':
@@ -48,7 +48,6 @@ def upload_file():
                 flash('Unsupported file type')
                 return redirect(request.url)
 
-            # Analyze logs and store alerts
             alerts = analyzer.analyze()
             alerts_store[filename] = alerts
 
