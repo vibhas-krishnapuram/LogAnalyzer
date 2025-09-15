@@ -9,6 +9,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite://users.sqlite3"
 
 db = SQLAlchemy(app)
 
+## pair with mongo later
+
 
 
 @app.route("/")
