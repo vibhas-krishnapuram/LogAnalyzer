@@ -5,15 +5,52 @@ import os
 from MainClass.class_auth import authLogs_Analyzer  
 from MainClass.class_webLogs import WebLogScanner
 
+
+## TABLES Pulled from file DB.py
+from DB import User
+from DB import File
+
+from flask_sqlalchemy import SQLAlchemy
+from flask_bcrypt import Bcrypt
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret-key'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  
+
+## DB SETUP
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_TRACK_NOTIFICATIONS'] = False
+app.config['JWT_SECRET_KEY'] = 'dev' ## this is for testing purpose, env var when prod ready
+
+
+## Flask App INIT
+db = SQLAlchemy(app)
+bcrypt = Bcrypt(app)
+jwt = JWTManager(app)
+
 
 ALLOWED_EXTENSIONS = {'txt', 'log'}
 alerts_store = {}  # store alerts per filename
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+
+with app.app_context():
+    db.create_all()
+
+
+
+@app.route("/register", methods=("GET, POST"))
+def register():
+    data = request.get_json()
+    name = data.get("name")
+    username = data.get("username")
+    password = data.get('password')
+
+
+
 
 
 def allowed_file(filename):
