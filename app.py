@@ -1,3 +1,4 @@
+from venv import create
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
 import os
@@ -42,14 +43,38 @@ with app.app_context():
 
 
 
-@app.route("/register", methods=("GET, POST"))
+@app.route("/register", methods=["GET", "POST"])
 def register():
     data = request.get_json()
     name = data.get("name")
     username = data.get("username")
     password = data.get('password')
+    hashed = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    if User.query.filter_by(username=username).first():
+        return jsonify({"message": "Username already registered"}), 400
+    
+    new_user = User(name=name, username=username, password=hashed)
+    db.session.add(new_user)
+    db.session.commit()
+
+    return jsonify({"message": "New User Succesfully Registered"}), 201
 
 
+@app.route("/login", methods=["GET", "POST"])    
+def login():
+    data = request.get_json()
+    name = data.get("name")
+    username = data.get("username")
+    password = data.get('password')
+
+    user = User.query.filter_by(username=username).first()
+    
+    if not user or not bcrypt.check_password_hash(user.password, password):
+        return jsonify({"message": "Not able to Login"}), 401
+    else:
+        access_token = create_access_token(identity=username)
+        return jsonify({"access token": access_token, "topics": user.topics}), 200
 
 
 
@@ -58,6 +83,7 @@ def allowed_file(filename):
 
 
 @app.route("/home", methods=["GET", "POST"])
+@jwt_required()
 def upload_file():
     if request.method == 'POST':
      
@@ -98,6 +124,7 @@ def upload_file():
 
 
 @app.route("/alerts/<filename>", methods=["GET"])
+@jwt_required()
 def get_alerts(filename):
     alerts = alerts_store.get(filename)
     if alerts is None:
@@ -106,6 +133,7 @@ def get_alerts(filename):
 
 
 @app.route("/files", methods=["GET"])
+@jwt_required()
 def list_files():
     """Return a list of uploaded files"""
     files = list(alerts_store.keys())
